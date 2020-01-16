@@ -1,10 +1,15 @@
 import unittest
 from selenium import webdriver
 import time
+# для работы с сохраненными файлами
 import os
+# в именах сохраненных файлов ставится дата
 import datetime
+# классы для обработки PDF
 import textract
+# для очистки папки с сохраненными файлами после теста
 import shutil
+# классы для обработки русского текста в PDF
 import io
 from pdfminer.converter import TextConverter
 from pdfminer.pdfinterp import PDFPageInterpreter
@@ -16,8 +21,7 @@ class PriceTestCase(unittest.TestCase):
     # подготовка к каждому тесту
     def setUp(self):
         # папка для сохранения файлов
-        self.savePath ="c:\\testDownloads\\"
-        #"c:\\Users\\Home\\Downloads"
+        self.savePath = "c:\\testDownloads\\"
         # очистка папки с сохраненными файлами
         if os.path.isdir(self.savePath):
             shutil.rmtree(self.savePath)
@@ -39,10 +43,10 @@ class PriceTestCase(unittest.TestCase):
             False
         )
         # запуск Firefox при начале каждого теста
-        self.driver = webdriver.Firefox()
+        self.driver = webdriver.Firefox(firefox_profile=profile)
         # открытие страницы при начале каждого теста
         self.page = self.driver.get(
-            'https://service-online.su/forms/cenniki/'
+            "https://service-online.su/forms/cenniki/"
         )
         # открытие окна авторизации
         elem = self.driver.find_element_by_id("enter")
@@ -57,8 +61,6 @@ class PriceTestCase(unittest.TestCase):
         # нажатие кнопки "Войти"
         elem = self.driver.find_element_by_name("test_enter")
         elem.click()
-        # 3 сек ожидания открытия окна
-        time.sleep(3)
         # закрытие сообщения об успешном входе
         elem = self.driver.find_element_by_id("delete")
         elem.click()
@@ -117,11 +119,9 @@ class PriceTestCase(unittest.TestCase):
         # жмем ссылку "Скачать"
         elem = self.driver.find_element_by_id("download")
         elem.click()
-
-
         # 10 сек ожидания
         # на случай, если Firefox спросит, сохранять файл
-        time.sleep(10)
+        time.sleep(25)
 
         # проверяем наличие сохраненного файла по названию
         today = datetime.date.today()
@@ -144,6 +144,9 @@ class PriceTestCase(unittest.TestCase):
         self.assertIn(b"kg", page)
         self.assertIn(b"RB", page)
         self.assertIn(b"Candy Southern Night", page)
+        # цена
+        self.assertIn(b"10", page)
+        self.assertIn(b"55", page)
 
     # тест сохранения одного ценника на русском
     def testOnePriceRu(self):
@@ -216,7 +219,6 @@ class PriceTestCase(unittest.TestCase):
         page_interpreter.process_page(page_obj)
         # забираем текст страницы в переменную page
         page = fake_file_handle.getvalue()
-
         # уничтожаем созданные объекты
         converter.close()
         fake_file_handle.close()
